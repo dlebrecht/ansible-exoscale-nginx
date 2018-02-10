@@ -2,12 +2,12 @@
 - hosts: localhost
   connection: local
   vars:
-    ssh_key: nginx
-    num_nodes: 2
-    security_group_name: nginx
-    template: Linux Ubuntu 16.04 LTS 64-bit
+    ssh_key: lighttpd
+    num_nodes: 1
+    security_group_name: lighttpd
+    template: Linux Debian 9 64-bit
     template_filter: featured
-    instance_type: Tiny
+    instance_type: Micro
     root_disk_size: 10
     zone: ch-gva-2
 

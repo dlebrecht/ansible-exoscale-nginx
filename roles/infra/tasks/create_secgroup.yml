@@ -4,4 +4,4 @@
     local_action:
      module: cs_securitygroup
      name: "{{ security_group_name }}"
-     description: our nginx webservers
+     description: "{{ security_group_name }}"
