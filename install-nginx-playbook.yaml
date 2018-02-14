@@ -65,6 +65,12 @@
         - crossbar
       when: repo.changed
 
-    # - copy:
-    #     src: /home/dlebrecht/src/btc-congestion-ui/dist/
-    #     dest: /var/www/html
+    - name: clone ui 
+      git:
+        name: https://github.com/dlebrecht/btc-congestion-ui.git
+        dest: /tmp/bcm-ui
+      register: ui 
+
+    - name: copy ui to /var/www/html
+      command: cp /tmp/bcm-ui/dist/. /var/www/html -r
+      when: ui.changed
