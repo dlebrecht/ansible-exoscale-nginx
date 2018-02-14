@@ -2,9 +2,9 @@
 - hosts: localhost
   connection: local
   vars:
-    ssh_key: lighttpd
+    ssh_key: nginx
     num_nodes: 1
-    security_group_name: lighttpd
+    security_group_name: nginx
     template: Linux Debian 9 64-bit
     template_filter: featured
     instance_type: Micro

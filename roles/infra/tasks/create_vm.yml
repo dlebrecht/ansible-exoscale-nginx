@@ -9,4 +9,4 @@
       zone: "{{ zone }}"
       root_disk_size: "{{ root_disk_size }}"
     with_sequence: count={{ num_nodes }}
-    register: lighttpd_nodes
+    register: nginx_nodes

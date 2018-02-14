@@ -1,0 +1,70 @@
+---
+- hosts: [nginx_nodes]
+  remote_user: root
+  roles:
+    - nodesource.node
+
+  tasks:
+    - name: Install nginx web server
+      apt: name=nginx state=present
+
+    - name: Install supervisord
+      apt: name=supervisor state=latest
+
+    - name: Install python3-pip
+      apt: name=python3-pip state=latest
+
+    - name: Install crossbar
+      pip:
+        name: crossbar
+
+    - name: Install htop
+      apt: name=htop state=present
+
+    - name: Install curl
+      apt: name=curl state=present
+
+    - name: Install git
+      apt: name=git state=present
+
+    - name: Get rest server
+      git:
+        name: https://github.com/dlebrecht/bcm-fe-vm.git
+        dest: /app
+      register: repo
+
+    - copy:
+        src: /app/_env/rest.super.conf
+        dest: /etc/supervisor/conf.d
+        remote_src: yes
+      when: repo.changed
+
+    - copy:
+        src: /app/_env/crossbar.super.conf
+        dest: /etc/supervisor/conf.d
+        remote_src: yes
+      when: repo.changed
+
+    - name: Install app dependencies
+      command: npm i
+      args:
+        chdir: /app
+      when: repo.changed
+
+    - name: Compile tsc
+      command: npm run build
+      args:
+        chdir: /app
+      when: repo.changed
+
+    - supervisorctl:
+        name: "{{ item }}"
+        state: restarted
+      with_items:
+        - rest-server
+        - crossbar
+      when: repo.changed
+
+    # - copy:
+    #     src: /home/dlebrecht/src/btc-congestion-ui/dist/
+    #     dest: /var/www/html
