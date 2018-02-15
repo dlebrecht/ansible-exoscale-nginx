@@ -18,6 +18,7 @@
       protocol: tcp
       start_port: 80
       end_port: 80
+    when: security_group_name == "nginx"
 
   - name: WAMP from anywhere
     local_action:

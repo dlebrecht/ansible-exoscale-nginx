@@ -1,10 +1,12 @@
+
 ---
 - hosts: localhost
   connection: local
   vars:
-    ssh_key: nginx
+    ssh_key: bitcoin-congestion-manager
     num_nodes: 1
-    security_group_name: nginx
+    security_group_name: bitcoin-congestion-manager
+    nodes: bitcoin-congestion-manager_nodes
     template: Linux Debian 9 64-bit
     template_filter: featured
     instance_type: Micro

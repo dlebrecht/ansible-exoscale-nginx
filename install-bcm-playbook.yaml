@@ -1,12 +1,15 @@
 ---
-- hosts: [nginx_nodes]
+- hosts: [bitcoin-congestion-manger_nodes]
   remote_user: root
   roles:
     - nodesource.node
 
   tasks:
-    - name: Install nginx web server
-      apt: name=nginx state=present
+    - name: Install bitcoind
+      apt: name=bitcoind state=present
+
+    - name: Install redis
+      apt: name=redis state=present
 
     - name: Install supervisord
       apt: name=supervisor state=present
@@ -27,37 +30,44 @@
     - name: Install git
       apt: name=git state=present
 
-    - name: Get rest server
+    - name: Get btc-congestion-manager
       git:
-        name: https://github.com/dlebrecht/bcm-fe-vm.git
+        name: https://github.com/dlebrecht/btc-congestion-manager.git
         dest: /app
-      register: rest
+      register: bcm
 
     - copy:
-        src: /app/_env/rest.super.conf
+        src: /app/_env/bitcoind.super.conf
         dest: /etc/supervisor/conf.d
         remote_src: yes
-      when: rest.changed
+      when: bcm.changed
       register: supervisor_config1
 
     - copy:
         src: /app/_env/crossbar.super.conf
         dest: /etc/supervisor/conf.d
         remote_src: yes
-      when: rest.changed
+      when: bcm.changed
       register: supervisor_config2
+
+    - copy:
+        src: /app/_env/btc-congestion-manager.super.conf
+        dest: /etc/supervisor/conf.d
+        remote_src: yes
+      when: bcm.changed
+      register: supervisor_config3
 
     - name: Install app dependencies
       command: npm i
       args:
         chdir: /app
-      when: rest.changed
+      when: bcm.changed
 
     - name: Compile tsc
       command: npm run build
       args:
         chdir: /app
-      when: rest.changed
+      when: bcm.changed
 
     - supervisorctl:
         name: "{{ item }}"
@@ -65,27 +75,4 @@
       with_items:
         - rest-server
         - crossbar
-      when: supervisor_config1.changed or supervisor_config2.changed
-
-    - name: clone ui 
-      git:
-        name: https://github.com/dlebrecht/btc-congestion-ui.git
-        dest: /tmp/bcm-ui
-      register: ui 
-
-    - name: copy ui bundles to /var/www/html
-      command: cp /tmp/bcm-ui/dist/. /var/www/html -r
-      when: ui.changed
-
-    - copy:
-        src: /app/_env/default_server
-        dest: /etc/nginx/sites-available/default
-        remote_src: yes
-      when: rest.changed
-      register: nginx_config
-
-    - name: reload nginx
-      systemd:
-        name: nginx
-        state: reloaded
-      when: nginx_config.changed
+      when: supervisor_config1.changed or supervisor_config2.changed or supervisor_config3.changed

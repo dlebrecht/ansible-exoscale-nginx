@@ -1,0 +1,17 @@
+---
+- hosts: localhost
+  connection: local
+  vars:
+    ssh_key: nginx
+    num_nodes: 1
+    security_group_name: nginx
+    nodes: nginx_nodes
+    template: Linux Debian 9 64-bit
+    template_filter: featured
+    instance_type: Micro
+    root_disk_size: 10
+    zone: ch-gva-2
+
+  roles:
+    - common
+    - infra
