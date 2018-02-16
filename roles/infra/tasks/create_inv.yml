@@ -1,5 +1,4 @@
 # Create inventory file
-
   - name: Create inventory file
-    template: src=inventory.j2 dest=./inventory
+    template: src=inventory.j2 dest=./inventory/{{security_group_name}}
     tags: inventory

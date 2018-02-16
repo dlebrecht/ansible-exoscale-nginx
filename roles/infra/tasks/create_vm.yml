@@ -9,4 +9,18 @@
       zone: "{{ zone }}"
       root_disk_size: "{{ root_disk_size }}"
     with_sequence: count={{ num_nodes }}
-    register: nginx_nodes
+    register: nodes
+
+  # - name: show VM IP
+  #   debug: msg="{% for item in nodes.results %}{{ item.default_ip }}{% endfor %}"
+
+  # - name: assing IP to the inventory
+  #   set_fact: ansible_ssh_host="{% for item in nodes.results %}{{ item.default_ip }}{% endfor %}"
+
+
+
+
+  # - name: dbg
+  #   debug: msg="{{ ansible_ssh_host }}"
+    # - name: assing IP to the inventory
+    # set_fact: ansible_ssh_host={{ nodes.default_ip }}

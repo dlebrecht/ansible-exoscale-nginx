@@ -1,11 +1,11 @@
 ---
 - hosts: localhost
   connection: local
+  strategy: debug
   vars:
     ssh_key: nginx
-    num_nodes: 1
+    num_nodes: 2
     security_group_name: nginx
-    nodes: nginx_nodes
     template: Linux Debian 9 64-bit
     template_filter: featured
     instance_type: Micro

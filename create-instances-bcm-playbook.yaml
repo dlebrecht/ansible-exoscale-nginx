@@ -7,10 +7,10 @@
     num_nodes: 1
     security_group_name: bitcoin-congestion-manager
     nodes: bitcoin-congestion-manager_nodes
-    template: Linux Debian 9 64-bit
+    template: Linux Ubuntu 16.04 LTS 64-bit
     template_filter: featured
-    instance_type: Micro
-    root_disk_size: 10
+    instance_type: Medium
+    root_disk_size: 200
     zone: ch-gva-2
 
   roles:

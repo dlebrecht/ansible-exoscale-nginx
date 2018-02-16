@@ -1,25 +1,32 @@
 ---
-- hosts: [bitcoin-congestion-manger_nodes]
+- hosts: [bitcoin-congestion-manager_nodes]
   remote_user: root
   roles:
     - nodesource.node
 
   tasks:
-    - name: Install bitcoind
-      apt: name=bitcoind state=present
-
     - name: Install redis
-      apt: name=redis state=present
-
+      apt: name=redis-server state=present
+      register: redis_install
     - name: Install supervisord
       apt: name=supervisor state=present
 
     - name: Install python3-pip
       apt: name=python3-pip state=present
 
+    - name: Install virtualenv
+      apt: name=virtualenv state=present
+
+    - name: Get btc-congestion-manager
+      git:
+        name: https://github.com/dlebrecht/btc-congestion-manager.git
+        dest: /app
+      register: bcm
+
     - name: Install crossbar
       pip:
         name: crossbar
+        virtualenv: /app/penv
 
     - name: Install htop
       apt: name=htop state=present
@@ -30,11 +37,27 @@
     - name: Install git
       apt: name=git state=present
 
-    - name: Get btc-congestion-manager
-      git:
-        name: https://github.com/dlebrecht/btc-congestion-manager.git
-        dest: /app
-      register: bcm
+    # - name: Install npm
+    #   apt: name=npm state=present
+
+    - apt_repository:
+        repo: 'ppa:bitcoin/bitcoin'
+        state: present
+
+    - name: Install bitcoind
+      apt: name=bitcoind state=present update_cache=yes
+
+   # create a directory if it doesn't exist
+    - file:
+        path: /etc/bitcoin
+        state: directory
+        mode: 0755
+
+    - copy:
+        src: /app/_env/bitcoind.conf
+        dest: /etc/bitcoin/bitcoind.conf
+        remote_src: yes
+      when: bcm.changed
 
     - copy:
         src: /app/_env/bitcoind.super.conf
@@ -63,16 +86,23 @@
         chdir: /app
       when: bcm.changed
 
-    - name: Compile tsc
+    - name: Compile app
       command: npm run build
       args:
         chdir: /app
       when: bcm.changed
 
+    - name: Initialize redis
+      command: npm run init-db
+      args:
+        chdir: /app
+      when: redis_install.changed
+
     - supervisorctl:
         name: "{{ item }}"
         state: restarted
       with_items:
-        - rest-server
+        - bitcoind
+        - btc-congestion-manager
         - crossbar
       when: supervisor_config1.changed or supervisor_config2.changed or supervisor_config3.changed
