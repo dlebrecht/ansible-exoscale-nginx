@@ -27,3 +27,20 @@
       protocol: tcp
       start_port: 8080
       end_port: 8080
+      
+  - name: Mosh 
+    local_action:
+      module: cs_securitygroup_rule
+      security_group: "{{ security_group_name }}"
+      protocol: udp
+      start_port: 60000
+      end_port: 61000
+
+  - name: Bitcoin 
+    local_action:
+      module: cs_securitygroup_rule
+      security_group: "{{ security_group_name }}"
+      protocol: tcp
+      start_port: 8333
+      end_port: 8333
+    when: security_group_name == "bitcoin-congestion-manager"

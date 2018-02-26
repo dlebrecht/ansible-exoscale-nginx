@@ -14,9 +14,16 @@
     - name: Install python3-pip
       apt: name=python3-pip state=present
 
+    - name: Install mosh
+      apt: name=mosh state=present
+
+    - name: Install virtualenv
+      apt: name=virtualenv state=present
+
     - name: Install crossbar
       pip:
         name: crossbar
+        virtualenv: /app/penv
 
     - name: Install htop
       apt: name=htop state=present
@@ -24,15 +31,31 @@
     - name: Install curl
       apt: name=curl state=present
 
+    # - name: Install docker
+    #   apt: name=docker.io state=present
+
+    # # TODO: not sure below needed 
+    # - name: Install docker-py
+    #   pip:
+    #     name: docker-py
+      
     - name: Install git
       apt: name=git state=present
 
-    - name: Get rest server
+    - name: Clone rest server
       git:
         name: https://github.com/dlebrecht/bcm-fe-vm.git
-        dest: /app
+        dest: /tmp/app
       register: rest
 
+    # - set_fact: rest=yes # FIXME
+    #   register: rest
+
+    - name: copy rest server to /app
+      command: cp /tmp/app/. /app -r
+      when: rest.changed
+
+    # - debug: var=hostvars[inventory_hostname]['ansible_default_ipv4']['address']
     - copy:
         src: /app/_env/rest.super.conf
         dest: /etc/supervisor/conf.d
@@ -47,17 +70,39 @@
       when: rest.changed
       register: supervisor_config2
 
+    - name: set unsafe-perm for npm
+      command: npm config set unsafe-perm=true
+
     - name: Install app dependencies
       command: npm i
       args:
         chdir: /app
       when: rest.changed
 
+    # - name: delete dist folder from app if it exists
+    #   command: rm /app/dist -rf
+    #   when: rest.changed
+
     - name: Compile tsc
       command: npm run build
       args:
         chdir: /app
       when: rest.changed
+
+    - apt_repository:
+        repo: deb http://http.debian.net/debian stretch-backports main contrib non-free
+        state: present
+
+    - name: Install certbot
+      apt: name=python-certbot-nginx state=present default_release=stretch-backports update_cache=yes
+      when: no
+
+    - name: get certificate
+      command: certbot --authenticator webroot --installer nginx -m dan@digithink.ch --agree-tos --domains domains_go_here
+      when: no
+
+    - name: change owner of /app
+      command: chown -R debian:debian /app
 
     - supervisorctl:
         name: "{{ item }}"
@@ -89,3 +134,41 @@
         name: nginx
         state: reloaded
       when: nginx_config.changed
+
+    # - name: stop container  
+    #   docker_container:
+    #     name: envoy
+    #     image: envoy:v1
+    #     ports:
+    #       - 9901:9901
+    #       - 80:10000
+    #     state: absent
+    #   when: yes
+
+    # - name: rm envoy docker image  
+    #   docker_image:
+    #     path: /app/_env/envoy
+    #     name: envoy:v1
+    #     state: absent
+    #   when: yes
+
+    # - copy:
+    #     src: /home/dlebrecht/src/bcm-fe-vm/_env/envoy/envoy.yaml
+    #     dest: /app/_env/envoy
+
+    # - name: create envoy docker image  
+    #   docker_image:
+    #     path: /app/_env/envoy
+    #     name: envoy:v1
+    #     state: present
+    #   when: yes
+
+    # - name: start container  
+    #   docker_container:
+    #     name: envoy
+    #     image: envoy:v1
+    #     ports:
+    #       - 9901:9901
+    #       - 80:10000
+    #     state: started 
+    #   when: yes
